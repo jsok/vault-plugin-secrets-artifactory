@@ -66,14 +66,21 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 }
 
 func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	entry, err := logical.StorageEntryJSON("config", accessConfig{
+	config := accessConfig{
 		Address: data.Get("address").(string),
 		ApiKey:  data.Get("api_key").(string),
-	})
+	}
+	if config.Address == "" {
+		return logical.ErrorResponse("address must be set"), nil
+	}
+	if config.ApiKey == "" {
+		return logical.ErrorResponse("api_key must be set"), nil
+	}
+
+	entry, err := logical.StorageEntryJSON("config", config)
 	if err != nil {
 		return nil, err
 	}
-
 	if err := req.Storage.Put(ctx, entry); err != nil {
 		return nil, err
 	}
