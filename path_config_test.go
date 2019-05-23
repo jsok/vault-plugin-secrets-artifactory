@@ -9,19 +9,19 @@ import (
 
 func TestConfig_Write(t *testing.T) {
 	tests := []struct {
-		expectedToSucceed bool
-		data              map[string]interface{}
+		expectation Expectation
+		data        map[string]interface{}
 	}{
 		{
-			true,
+			ExpectedToSucceed,
 			map[string]interface{}{
 				"address": "https://example.com/artifactory",
 				"api_key": "abc123",
 			},
 		},
-		{false, map[string]interface{}{"address": "https://example.com/artifactory"}},
-		{false, map[string]interface{}{"api_key": "abc123"}},
-		{false, map[string]interface{}{}},
+		{FailWithLogicalError, map[string]interface{}{"address": "https://example.com/artifactory"}},
+		{FailWithLogicalError, map[string]interface{}{"api_key": "abc123"}},
+		{FailWithLogicalError, map[string]interface{}{}},
 	}
 
 	for _, test := range tests {
@@ -35,15 +35,7 @@ func TestConfig_Write(t *testing.T) {
 		}
 
 		resp, err := b.HandleRequest(context.Background(), req)
-		if err != nil || (resp != nil && resp.IsError()) {
-			if test.expectedToSucceed {
-				t.Fatalf("Expected test case to succeed, err:%s resp:%#v\n", err, resp)
-			}
-		} else {
-			if !test.expectedToSucceed {
-				t.Fatalf("Expected test case to fail")
-			}
-		}
+		assertLogicalResponse(t, test.expectation, err, resp)
 	}
 }
 
@@ -63,9 +55,7 @@ func TestConfig_WriteIdempotent(t *testing.T) {
 	}
 
 	resp, err := b.HandleRequest(context.Background(), req)
-	if err != nil || (resp != nil && resp.IsError()) {
-		t.Fatalf("err:%s resp:%#v\n", err, resp)
-	}
+	assertLogicalResponse(t, ExpectedToSucceed, err, resp)
 
 	req = &logical.Request{
 		Operation: logical.ReadOperation,
@@ -75,9 +65,7 @@ func TestConfig_WriteIdempotent(t *testing.T) {
 	}
 
 	resp, err = b.HandleRequest(context.Background(), req)
-	if err != nil || (resp != nil && resp.IsError()) {
-		t.Fatalf("err:%s resp:%#v\n", err, resp)
-	}
+	assertLogicalResponse(t, ExpectedToSucceed, err, resp)
 
 	if resp.Data["address"] != data["address"] {
 		t.Fatalf("Read address did not equal expected: %v", resp.Data["address"])

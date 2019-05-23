@@ -30,3 +30,27 @@ func newBackend(t *testing.T) (logical.Backend, logical.Storage) {
 
 	return b, config.StorageView
 }
+
+// Assertion helpers to handle the ternary logic of making a logical.Request
+
+type Expectation int
+
+const (
+	ExpectedToSucceed Expectation = iota
+	FailWithError
+	FailWithLogicalError
+)
+
+func assertLogicalResponse(t *testing.T, expectation Expectation, err error, resp *logical.Response) {
+	if err != nil || (resp != nil && resp.IsError()) {
+		if expectation == ExpectedToSucceed {
+			t.Fatalf("Expected test case to succeed, got err:%s resp:%#v\n", err, resp)
+		}
+	}
+	if expectation == FailWithError && err == nil {
+		t.Fatalf("Expected test case to fail with error but succeeded: resp:%#v\n", resp)
+	}
+	if expectation == FailWithLogicalError && resp != nil && !resp.IsError() {
+		t.Fatalf("Expected test case to fail with logical error but succeeded: resp:%#v\n", resp)
+	}
+}
