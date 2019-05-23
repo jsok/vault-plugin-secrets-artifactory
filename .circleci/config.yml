@@ -1,0 +1,9 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - run: go test -v .
+      - run: go build -o bin/vault-plugin-secrets-artifactory .

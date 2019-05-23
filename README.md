@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/jsok/vault-plugin-secrets-artifactory.svg?style=svg)](https://circleci.com/gh/jsok/vault-plugin-secrets-artifactory)
+
 # Vault Plugin: Artifactory Secrets Backend
 
 This is a backend plugin to be used with [Hashicorp Vault](https://www.github.com/hashicorp/vault).
