@@ -7,6 +7,8 @@ import (
 	"github.com/hashicorp/vault/sdk/logical"
 )
 
+const accessTokenSecretType = "artifactory_access_token"
+
 func Factory(ctx context.Context, conf *logical.BackendConfig) (logical.Backend, error) {
 	b := Backend()
 	if err := b.Setup(ctx, conf); err != nil {
@@ -28,6 +30,19 @@ func Backend() *backend {
 			pathConfig(&b),
 			pathListRoles(&b),
 			pathRoles(&b),
+			pathToken(&b),
+		},
+
+		Secrets: []*framework.Secret{
+			&framework.Secret{
+				Type: accessTokenSecretType,
+				Fields: map[string]*framework.FieldSchema{
+					"access_token": {
+						Type:        framework.TypeString,
+						Description: "Artifactory Access Token",
+					},
+				},
+			},
 		},
 
 		BackendType: logical.TypeLogical,
