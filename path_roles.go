@@ -35,7 +35,7 @@ func pathRoles(b *backend) *framework.Path {
 
 			"member_of_groups": &framework.FieldSchema{
 				Type:        framework.TypeCommaStringSlice,
-				Description: `List of groups that the token is associated with.`,
+				Description: "List of groups that the token is associated with.",
 			},
 
 			"ttl": &framework.FieldSchema{
