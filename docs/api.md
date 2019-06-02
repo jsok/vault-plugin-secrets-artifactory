@@ -106,7 +106,9 @@ This endpoint creates an Artifactory access token based on the given role defini
 ```json
 {
     "data": {
-        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        "scope": "api:* member-of-groups:readers",
+        "token_type": "Bearer"
     }
 }
 ```
