@@ -19,6 +19,14 @@ func TestConfig_Write(t *testing.T) {
 				"api_key": "abc123",
 			},
 		},
+		{
+			ExpectedToSucceed,
+			map[string]interface{}{
+				"address":    "https://example.com/artifactory",
+				"api_key":    "abc123",
+				"tls_verify": false,
+			},
+		},
 		{FailWithLogicalError, map[string]interface{}{"address": "https://example.com/artifactory"}},
 		{FailWithLogicalError, map[string]interface{}{"api_key": "abc123"}},
 		{FailWithLogicalError, map[string]interface{}{}},

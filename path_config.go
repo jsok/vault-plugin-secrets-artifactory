@@ -20,6 +20,11 @@ func pathConfig(b *backend) *framework.Path {
 				Type:        framework.TypeString,
 				Description: "API Key to use to create access tokens",
 			},
+			"tls_verify": {
+				Type:        framework.TypeBool,
+				Description: "Disable TLS verification of Artifactory server",
+				Default:     true,
+			},
 		},
 		Callbacks: map[logical.Operation]framework.OperationFunc{
 			logical.ReadOperation:   b.pathConfigRead,
@@ -67,8 +72,9 @@ func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data
 
 func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 	config := accessConfig{
-		Address: data.Get("address").(string),
-		ApiKey:  data.Get("api_key").(string),
+		Address:   data.Get("address").(string),
+		ApiKey:    data.Get("api_key").(string),
+		TlsVerify: data.Get("tls_verify").(bool),
 	}
 	if config.Address == "" {
 		return logical.ErrorResponse("address must be set"), nil
@@ -89,8 +95,9 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 }
 
 type accessConfig struct {
-	Address string `json:"address"`
-	ApiKey  string `json:"api_key"`
+	Address   string `json:"address"`
+	ApiKey    string `json:"api_key"`
+	TlsVerify bool   `json:"tls_verify"`
 }
 
 const pathConfigRootHelpSyn = `

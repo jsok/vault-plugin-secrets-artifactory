@@ -61,7 +61,7 @@ func (b *backend) pathTokenRead(ctx context.Context, req *logical.Request, d *fr
 	rtDetails.SetApiKey(config.ApiKey)
 
 	client, clientErr := rtHttpClient.ArtifactoryClientBuilder().
-		SetInsecureTls(true).
+		SetInsecureTls(!config.TlsVerify).
 		SetArtDetails(&rtDetails).
 		Build()
 	if clientErr != nil {

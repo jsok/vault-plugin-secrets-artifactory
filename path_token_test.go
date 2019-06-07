@@ -81,8 +81,9 @@ func TestToken_Read(t *testing.T) {
 				Path:      "config",
 				Storage:   storage,
 				Data: map[string]interface{}{
-					"address": serverURL,
-					"api_key": "abc123",
+					"address":    serverURL,
+					"api_key":    "abc123",
+					"tls_verify": false,
 				},
 			}
 			resp, err := b.HandleRequest(context.Background(), createConfigReq)
