@@ -2,11 +2,16 @@
 layout: docs
 ---
 
+{::options toc_levels="2" /}
+
 # Artifactory Secrets Engine (API)
 
 This is the API documentation for the Vault Artifactory secrets engine.
 
 This documentation assumes the Artifactory secrets engine is enabled at the `/artifactory` path in Vault. Since it is possible to enable secrets engines at any location, please update your API calls accordingly.
+
+* Table of Contents
+{:toc}
 
 ## Configure Access
 
