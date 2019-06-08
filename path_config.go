@@ -34,33 +34,30 @@ func pathConfig(b *backend) *framework.Path {
 	}
 }
 
-func (b *backend) readConfig(ctx context.Context, storage logical.Storage) (*accessConfig, error, error) {
+func (b *backend) readConfig(ctx context.Context, storage logical.Storage) (*accessConfig, error) {
 	entry, err := storage.Get(ctx, "config")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if entry == nil {
-		return nil, fmt.Errorf("Backend hasn't been configured; please configure it at the '/config' endpoint"), nil
+		return nil, nil
 	}
 
 	conf := &accessConfig{}
 	if err := entry.DecodeJSON(conf); err != nil {
-		return nil, nil, fmt.Errorf("error reading artifactory configuration: %v", err)
+		return nil, fmt.Errorf("error reading artifactory configuration: %v", err)
 	}
 
-	return conf, nil, nil
+	return conf, nil
 }
 
 func (b *backend) pathConfigRead(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
-	conf, userErr, intErr := b.readConfig(ctx, req.Storage)
-	if intErr != nil {
-		return nil, intErr
-	}
-	if userErr != nil {
-		return logical.ErrorResponse(userErr.Error()), nil
+	conf, err := b.readConfig(ctx, req.Storage)
+	if err != nil {
+		return nil, err
 	}
 	if conf == nil {
-		return nil, fmt.Errorf("no user error reported but artifactory configuration not found")
+		return nil, fmt.Errorf("No artifactory configuration found")
 	}
 
 	return &logical.Response{

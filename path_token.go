@@ -9,8 +9,6 @@ import (
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
-	rtAuth "github.com/jfrog/jfrog-client-go/artifactory/auth"
-	rtHttpClient "github.com/jfrog/jfrog-client-go/artifactory/httpclient"
 
 	rtTokenService "github.com/jsok/vault-plugin-secrets-artifactory/pkg/token"
 )
@@ -45,27 +43,9 @@ func (b *backend) pathTokenRead(ctx context.Context, req *logical.Request, d *fr
 		return logical.ErrorResponse("role does not exist"), nil
 	}
 
-	config, userErr, intErr := b.readConfig(ctx, req.Storage)
-	if intErr != nil {
-		return nil, intErr
-	}
-	if userErr != nil {
-		return logical.ErrorResponse(userErr.Error()), nil
-	}
-	if config == nil {
-		return nil, fmt.Errorf("Artifactory configuration not found")
-	}
-
-	rtDetails := rtAuth.NewArtifactoryDetails()
-	rtDetails.SetUrl(config.Address)
-	rtDetails.SetApiKey(config.ApiKey)
-
-	client, clientErr := rtHttpClient.ArtifactoryClientBuilder().
-		SetInsecureTls(!config.TlsVerify).
-		SetArtDetails(&rtDetails).
-		Build()
-	if clientErr != nil {
-		return nil, fmt.Errorf("Failed to create Artifactory client: %v\n", clientErr)
+	client, rtDetails, err := b.rtClient(ctx, req.Storage)
+	if client == nil || rtDetails == nil {
+		return nil, fmt.Errorf("Failed to create Artifactory client: %v\n", err)
 	}
 
 	tokenService := rtTokenService.NewAccessTokenService(client)

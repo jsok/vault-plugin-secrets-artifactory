@@ -2,12 +2,17 @@ package artifactory
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
+	rtAuth "github.com/jfrog/jfrog-client-go/artifactory/auth"
+	rtHttpClient "github.com/jfrog/jfrog-client-go/artifactory/httpclient"
 )
 
-const accessTokenSecretType = "artifactory_access_token"
+type backend struct {
+	*framework.Backend
+}
 
 func Factory(ctx context.Context, conf *logical.BackendConfig) (logical.Backend, error) {
 	b := Backend()
@@ -51,6 +56,23 @@ func Backend() *backend {
 	return &b
 }
 
-type backend struct {
-	*framework.Backend
+func (b *backend) rtClient(ctx context.Context, s logical.Storage) (*rtHttpClient.ArtifactoryHttpClient, rtAuth.ArtifactoryDetails, error) {
+	config, err := b.readConfig(ctx, s)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	rtDetails := rtAuth.NewArtifactoryDetails()
+	rtDetails.SetUrl(config.Address)
+	rtDetails.SetApiKey(config.ApiKey)
+
+	client, err := rtHttpClient.ArtifactoryClientBuilder().
+		SetInsecureTls(!config.TlsVerify).
+		SetArtDetails(&rtDetails).
+		Build()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Failed to create Artifactory client: %v\n", err)
+	}
+
+	return client, rtDetails, nil
 }
