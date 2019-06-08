@@ -39,15 +39,7 @@ func Backend() *backend {
 		},
 
 		Secrets: []*framework.Secret{
-			&framework.Secret{
-				Type: accessTokenSecretType,
-				Fields: map[string]*framework.FieldSchema{
-					"access_token": {
-						Type:        framework.TypeString,
-						Description: "Artifactory Access Token",
-					},
-				},
-			},
+			secretAccessToken(&b),
 		},
 
 		BackendType: logical.TypeLogical,
