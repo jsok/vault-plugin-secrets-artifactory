@@ -35,7 +35,13 @@ type CreateTokenResponse struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+type RevokeTokenRequest struct {
+	Token   string
+	TokenID string
+}
+
 const tokenApiPath = "api/security/token"
+const tokenRevokeApiPath = tokenApiPath + "/revoke"
 
 func NewAccessTokenService(client *rtHttpClient.ArtifactoryHttpClient) *AccessTokenService {
 	return &AccessTokenService{client: client}
@@ -89,7 +95,31 @@ func (s *AccessTokenService) CreateToken(req *CreateTokenRequest) (*CreateTokenR
 	return tokenResp, nil
 }
 
-func (s *AccessTokenService) Revoke(token string) (bool, error) {
-	// TODO: Implement revocation
-	return true, nil
+func (s *AccessTokenService) RevokeToken(req *RevokeTokenRequest) error {
+	if req.Token == "" && req.TokenID == "" {
+		return fmt.Errorf("Empty request")
+	}
+
+	rtDetails := s.GetArtifactoryDetails()
+	reqUrl, err := utils.BuildArtifactoryUrl(rtDetails.GetUrl(), tokenRevokeApiPath, nil)
+	if err != nil {
+		return err
+	}
+
+	httpClientDetails := rtDetails.CreateHttpClientDetails()
+	httpClientDetails.Headers["Content-Type"] = "application/x-www-form-urlencoded"
+
+	data := url.Values{}
+	data.Set("token", req.Token)
+	data.Set("token_id", req.TokenID)
+
+	resp, body, err := s.client.SendPost(reqUrl, []byte(data.Encode()), &httpClientDetails)
+	if err != nil {
+		return err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return errorutils.CheckError(errors.New("Artifactory response: " + resp.Status + "\n" + clientutils.IndentJson(body)))
+	}
+
+	return nil
 }
