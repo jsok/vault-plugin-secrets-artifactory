@@ -1,6 +1,7 @@
 ---
-layout: default
+layout: docs
 ---
+
 # Vault Plugin: Artifactory Secrets Backend
 
 This is a backend plugin to be used with [Hashicorp Vault](https://www.github.com/hashicorp/vault).

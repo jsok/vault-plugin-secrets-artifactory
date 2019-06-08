@@ -1,5 +1,5 @@
 ---
-layout: default
+layout: docs
 ---
 
 # Artifactory Secrets Engine (API)
