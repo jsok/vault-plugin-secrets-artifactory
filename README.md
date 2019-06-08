@@ -9,6 +9,6 @@ It uses the [Artifactory REST API to dynamically issue Access Tokens](https://ww
 
 This plugin is still in development!
 
-## API
+## Documentation
 
-See the [API documentation](docs/api.md).
+See the [documentation](https://jsok.github.io/vault-plugin-secrets-artifactory/)
