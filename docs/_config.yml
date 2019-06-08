@@ -1,0 +1,8 @@
+---
+title: "Vault Plugin: Artifactory Secrets Backend"
+description: "A vault plugin to dynamically generate Artifactory access tokens"
+baseurl: "/vault-plugin-secrets-artifactory"
+url: ""
+
+theme: jekyll-theme-primer
+markdown: kramdown

@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Artifactory Secrets Engine (API)
 
 This is the API documentation for the Vault Artifactory secrets engine.
