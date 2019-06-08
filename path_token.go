@@ -35,7 +35,7 @@ func (b *backend) pathTokenRead(ctx context.Context, req *logical.Request, d *fr
 		return nil, errors.New("role name is required")
 	}
 
-	role, err := b.role(ctx, req.Storage, roleName)
+	role, err := readRole(ctx, req.Storage, roleName)
 	if err != nil {
 		return nil, err
 	}

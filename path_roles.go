@@ -44,6 +44,7 @@ func pathRoles(b *backend) *framework.Path {
 			},
 		},
 
+		ExistenceCheck: b.operationRoleExistenceCheck,
 		Callbacks: map[logical.Operation]framework.OperationFunc{
 			logical.CreateOperation: b.pathRolesCreateUpdate,
 			logical.ReadOperation:   b.pathRolesRead,
@@ -62,7 +63,7 @@ func (b *backend) pathRoleList(ctx context.Context, req *logical.Request, d *fra
 	return logical.ListResponse(entries), nil
 }
 
-func (b *backend) role(ctx context.Context, s logical.Storage, name string) (*roleConfig, error) {
+func readRole(ctx context.Context, s logical.Storage, name string) (*roleConfig, error) {
 	raw, err := s.Get(ctx, "role/"+name)
 	if err != nil {
 		return nil, err
@@ -85,7 +86,7 @@ func (b *backend) pathRolesRead(ctx context.Context, req *logical.Request, d *fr
 		return logical.ErrorResponse("missing name"), nil
 	}
 
-	role, err := b.role(ctx, req.Storage, name)
+	role, err := readRole(ctx, req.Storage, name)
 	if err != nil {
 		return nil, err
 	}
@@ -104,6 +105,14 @@ func (b *backend) pathRolesRead(ctx context.Context, req *logical.Request, d *fr
 	return resp, nil
 }
 
+func (b *backend) operationRoleExistenceCheck(ctx context.Context, req *logical.Request, d *framework.FieldData) (bool, error) {
+	entry, err := readRole(ctx, req.Storage, d.Get("name").(string))
+	if err != nil {
+		return false, err
+	}
+	return entry != nil, nil
+}
+
 func (b *backend) pathRolesCreateUpdate(ctx context.Context, req *logical.Request, d *framework.FieldData) (*logical.Response, error) {
 	roleName := d.Get("name").(string)
 	if roleName == "" {
@@ -111,7 +120,7 @@ func (b *backend) pathRolesCreateUpdate(ctx context.Context, req *logical.Reques
 	}
 
 	// Check if the role already exists
-	role, err := b.role(ctx, req.Storage, roleName)
+	role, err := readRole(ctx, req.Storage, roleName)
 	if err != nil {
 		return nil, err
 	}
