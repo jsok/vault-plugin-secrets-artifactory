@@ -117,6 +117,11 @@ func (s *AccessTokenService) RevokeToken(req *RevokeTokenRequest) error {
 	if err != nil {
 		return err
 	}
+
+	// This usually means that the token is not revocable
+	if resp.StatusCode == http.StatusInternalServerError {
+		return nil
+	}
 	if resp.StatusCode != http.StatusOK {
 		return errorutils.CheckError(errors.New("Artifactory response: " + resp.Status + "\n" + clientutils.IndentJson(body)))
 	}

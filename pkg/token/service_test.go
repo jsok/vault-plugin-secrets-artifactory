@@ -133,6 +133,13 @@ func TestRevokeToken(t *testing.T) {
 			},
 		},
 		{
+			true,
+			&RevokeTokenRequest{Token: "unrevocable-token"},
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusInternalServerError)
+			},
+		},
+		{
 			false,
 			&RevokeTokenRequest{Token: "fake-token"},
 			func(w http.ResponseWriter, r *http.Request) {
