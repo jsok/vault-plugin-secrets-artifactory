@@ -12,3 +12,11 @@ This plugin is still in development!
 ## Documentation
 
 See the [documentation](https://jsok.github.io/vault-plugin-secrets-artifactory/)
+
+To build the documentation locally:
+
+```
+cd docs
+bundle install
+bundle exec jekyll serve
+```

@@ -1,2 +1,6 @@
 vault-plugin-secrets-artifactory
 vendor
+
+# gh-pages
+docs/Gemfile.lock
+docs/_site
