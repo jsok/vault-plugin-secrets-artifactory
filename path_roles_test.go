@@ -31,6 +31,14 @@ func TestRole_Create(t *testing.T) {
 			},
 		},
 		{
+			ExpectedToSucceed,
+			"role-without-groups",
+			map[string]interface{}{
+				"username":         "user",
+				"member_of_groups": "",
+			},
+		},
+		{
 			FailWithLogicalError,
 			"role-with-invalid-ttl",
 			map[string]interface{}{
@@ -41,10 +49,7 @@ func TestRole_Create(t *testing.T) {
 		{
 			FailWithLogicalError,
 			"role-without-groups",
-			map[string]interface{}{
-				"username":         "user",
-				"member_of_groups": "",
-			},
+			map[string]interface{}{},
 		},
 	}
 
@@ -60,6 +65,37 @@ func TestRole_Create(t *testing.T) {
 
 		resp, err := b.HandleRequest(context.Background(), req)
 		assertLogicalResponse(t, test.expectation, err, resp)
+	}
+}
+
+func TestRole_Create_UserScoped(t *testing.T) {
+	b, storage := newBackend(t)
+
+	roleData := map[string]interface{}{"username": "user"}
+
+	req := &logical.Request{
+		Operation: logical.CreateOperation,
+		Path:      "roles/test",
+		Storage:   storage,
+		Data:      roleData,
+	}
+	resp, err := b.HandleRequest(context.Background(), req)
+	assertLogicalResponse(t, ExpectedToSucceed, err, resp)
+
+	req = &logical.Request{
+		Operation: logical.ReadOperation,
+		Path:      "roles/test",
+		Storage:   storage,
+	}
+	resp, err = b.HandleRequest(context.Background(), req)
+	assertLogicalResponse(t, ExpectedToSucceed, err, resp)
+
+	groups := resp.Data["member_of_groups"].([]string)
+	if len(groups) != 1 {
+		t.Fatalf("Expected exactly 1 group set on role, got: %v\n", groups)
+	}
+	if groups[0] != "*" {
+		t.Fatalf("Expected group '*', got: %v\n", groups)
 	}
 }
 

@@ -140,7 +140,12 @@ func (b *backend) pathRolesCreateUpdate(ctx context.Context, req *logical.Reques
 		role.MemberOfGroups = memberOfGroups.([]string)
 	}
 	if len(role.MemberOfGroups) == 0 {
-		return logical.ErrorResponse("member_of_groups cannot be empty"), nil
+		if role.Username == "" {
+			return logical.ErrorResponse("member_of_groups cannot be empty if no username supplied"), nil
+		}
+		// Assume user-scoped-token
+		// This will fail when creating tokens if the username is transient
+		role.MemberOfGroups = []string{"*"}
 	}
 
 	if tokenTTLRaw, ok := d.GetOk("ttl"); ok {
