@@ -24,7 +24,9 @@ This endpoint configures the access information for Artifactory. This access inf
 ### Paramaters
 
  * `address` `(string: required)` - Specifies the Artifactory URL, e.g. `https://artifactory.example.com/artifactory`
- * `api_key` `(string: required)` - The API key associated with the (optinally admin) user which will be used to generate access tokens.
+ * `api_key` `(string: required)` - The API key associated with the user which will be used to generate access tokens. Mutually exclusive with `username` and `password`.
+ * `username` `(string: required)` - The user which will be used to generate access token. Mutually exclusive with `api_key` and must also supply `password`.
+ * `password` `(string: required)` - The password of the user which will be used to generate access token.
  * `tls_verify` `(boolean: optional)` - Disable TLS verification. Defaults to `true`.
 
 

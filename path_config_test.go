@@ -22,9 +22,41 @@ func TestConfig_Write(t *testing.T) {
 		{
 			ExpectedToSucceed,
 			map[string]interface{}{
+				"address":  "https://example.com/artifactory",
+				"username": "admin",
+				"password": "password",
+			},
+		},
+		{
+			ExpectedToSucceed,
+			map[string]interface{}{
 				"address":    "https://example.com/artifactory",
 				"api_key":    "abc123",
 				"tls_verify": false,
+			},
+		},
+		{
+			FailWithLogicalError,
+			map[string]interface{}{
+				"address":  "https://example.com/artifactory",
+				"username": "admin",
+			},
+		},
+		{
+			FailWithLogicalError,
+			map[string]interface{}{
+				"address":  "https://example.com/artifactory",
+				"api_key":  "abc123",
+				"username": "admin",
+			},
+		},
+		{
+			FailWithLogicalError,
+			map[string]interface{}{
+				"address":  "https://example.com/artifactory",
+				"api_key":  "abc123",
+				"username": "admin",
+				"password": "password",
 			},
 		},
 		{FailWithLogicalError, map[string]interface{}{"address": "https://example.com/artifactory"}},

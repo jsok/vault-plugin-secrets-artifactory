@@ -20,6 +20,14 @@ func pathConfig(b *backend) *framework.Path {
 				Type:        framework.TypeString,
 				Description: "API Key to use to create access tokens",
 			},
+			"username": {
+				Type:        framework.TypeString,
+				Description: "Username which will be used to create access tokens",
+			},
+			"password": {
+				Type:        framework.TypeString,
+				Description: "Password of the user which will be used to create access tokens",
+			},
 			"tls_verify": {
 				Type:        framework.TypeBool,
 				Description: "Disable TLS verification of Artifactory server",
@@ -71,12 +79,22 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 	config := accessConfig{
 		Address:   data.Get("address").(string),
 		ApiKey:    data.Get("api_key").(string),
+		Username:  data.Get("username").(string),
+		Password:  data.Get("password").(string),
 		TlsVerify: data.Get("tls_verify").(bool),
 	}
 	if config.Address == "" {
 		return logical.ErrorResponse("address must be set"), nil
 	}
-	if config.ApiKey == "" {
+	if config.ApiKey != "" && config.Username != "" {
+		return logical.ErrorResponse("provide either api_key or username, not both"), nil
+	}
+
+	if config.Username != "" {
+		if config.Password == "" {
+			return logical.ErrorResponse("must provide password with username"), nil
+		}
+	} else if config.ApiKey == "" {
 		return logical.ErrorResponse("api_key must be set"), nil
 	}
 
@@ -94,6 +112,8 @@ func (b *backend) pathConfigWrite(ctx context.Context, req *logical.Request, dat
 type accessConfig struct {
 	Address   string `json:"address"`
 	ApiKey    string `json:"api_key"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
 	TlsVerify bool   `json:"tls_verify"`
 }
 

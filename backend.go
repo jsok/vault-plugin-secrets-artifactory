@@ -57,6 +57,8 @@ func (b *backend) rtClient(ctx context.Context, s logical.Storage) (*rtHttpClien
 	rtDetails := rtAuth.NewArtifactoryDetails()
 	rtDetails.SetUrl(config.Address)
 	rtDetails.SetApiKey(config.ApiKey)
+	rtDetails.SetUser(config.Username)
+	rtDetails.SetPassword(config.Password)
 
 	client, err := rtHttpClient.ArtifactoryClientBuilder().
 		SetInsecureTls(!config.TlsVerify).
