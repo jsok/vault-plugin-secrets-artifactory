@@ -48,12 +48,18 @@ func (b *backend) pathTokenRead(ctx context.Context, req *logical.Request, d *fr
 		return nil, fmt.Errorf("Failed to create Artifactory client: %v\n", err)
 	}
 
+	username := role.Username
+	if username == "" {
+		username = generateRoleUsername(roleName, req.ID)
+	}
+
 	tokenService := rtTokenService.NewAccessTokenService(client)
 	tokenService.SetArtifactoryDetails(rtDetails)
 	tokenResp, err := tokenService.CreateToken(&rtTokenService.CreateTokenRequest{
-		Username:  role.Username,
-		Scope:     fmt.Sprintf("member-of-groups:%s", strings.Join(role.MemberOfGroups, ",")),
-		ExpiresIn: int64(role.TTL.Seconds()),
+		Username:    username,
+		Scope:       fmt.Sprintf("member-of-groups:%s", strings.Join(role.MemberOfGroups, ",")),
+		ExpiresIn:   int64(role.TTL.Seconds()),
+		Refreshable: false,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create access token: %v\n", err)
@@ -67,12 +73,19 @@ func (b *backend) pathTokenRead(ctx context.Context, req *logical.Request, d *fr
 		},
 		map[string]interface{}{
 			"role_name": roleName,
+			"username":  username,
 		},
 	)
 	resp.Secret.TTL = time.Duration(tokenResp.ExpiresIn) * time.Second
 	resp.Secret.MaxTTL = resp.Secret.MaxTTL
 
 	return resp, nil
+}
+
+// Generate a transient username that's highly unlikely to clash
+// with an existing Artifactory username.
+func generateRoleUsername(role, id string) string {
+	return fmt.Sprintf("vault-%s-%s", role, id)
 }
 
 const pathTokenHelpSyn = `

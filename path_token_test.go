@@ -16,29 +16,16 @@ func TestToken_Read(t *testing.T) {
 	tests := []struct {
 		expectation  Expectation
 		createConfig bool
-		createRole   bool
-		name         string
+		role         map[string]interface{}
 		handler      http.HandlerFunc
 	}{
 		{
-			FailWithLogicalError, // Role does not exist
-			true,
-			false,
-			"nonexistent-role",
-			nil,
-		},
-		{
-			FailWithLogicalError, // Backend has not been configured
-			false,
-			true,
-			"test",
-			nil,
-		},
-		{
 			ExpectedToSucceed,
 			true,
-			true,
-			"test",
+			map[string]interface{}{
+				"username":         "user",
+				"member_of_groups": "group",
+			},
 			func(w http.ResponseWriter, r *http.Request) {
 				body, err := json.Marshal(
 					&rtTokenService.CreateTokenResponse{
@@ -54,10 +41,44 @@ func TestToken_Read(t *testing.T) {
 			},
 		},
 		{
+			ExpectedToSucceed,
+			true,
+			map[string]interface{}{"member_of_groups": "group"}, // transient user
+			func(w http.ResponseWriter, r *http.Request) {
+				body, err := json.Marshal(
+					&rtTokenService.CreateTokenResponse{
+						AccessToken: "abc123",
+						ExpiresIn:   3600,
+						Scope:       "api:* member-of-groups:readers",
+						TokenType:   "Bearer",
+					})
+				if err != nil {
+					t.Fatal("Encoding mock HTTP response failed!")
+				}
+				w.Write(body)
+			},
+		},
+		{
+			FailWithLogicalError, // Role does not exist
+			true,
+			nil,
+			func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(http.StatusOK)
+			},
+		},
+		{
+			FailWithLogicalError, // Backend has not been configured
+			false,
+			map[string]interface{}{"username": "user"},
+			nil,
+		},
+		{
 			FailWithLogicalError, // HTTP 403 response from Artifactory
 			true,
-			true,
-			"test",
+			map[string]interface{}{
+				"username":         "user",
+				"member_of_groups": "group",
+			},
 			func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(http.StatusForbidden)
 			},
@@ -89,15 +110,12 @@ func TestToken_Read(t *testing.T) {
 			resp, err := b.HandleRequest(context.Background(), createConfigReq)
 			assertLogicalResponse(t, ExpectedToSucceed, err, resp)
 		}
-		if test.createRole {
+		if test.role != nil {
 			createRoleReq := &logical.Request{
 				Operation: logical.CreateOperation,
 				Path:      "roles/test",
 				Storage:   storage,
-				Data: map[string]interface{}{
-					"username":         "user",
-					"member_of_groups": "group",
-				},
+				Data:      test.role,
 			}
 			resp, err := b.HandleRequest(context.Background(), createRoleReq)
 			assertLogicalResponse(t, ExpectedToSucceed, err, resp)
@@ -106,7 +124,7 @@ func TestToken_Read(t *testing.T) {
 		if test.handler != nil {
 			req := &logical.Request{
 				Operation: logical.ReadOperation,
-				Path:      "token/" + test.name,
+				Path:      "token/test",
 				Storage:   storage,
 			}
 			resp, err := b.HandleRequest(context.Background(), req)
