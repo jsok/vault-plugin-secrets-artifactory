@@ -5,18 +5,56 @@ jobs:
       - image: circleci/golang:1.12
     steps:
       - checkout
+      - run: mkdir -p workspace/plugins workspace/coverage
       - run:
           name: Build
           command: |
-            go build -o bin/vault-plugin-secrets-artifactory .
-      - run:
-          name: Create directory for artifacts
-          command: |
-            mkdir -p /tmp/artifacts
+            mkdir -p workspace/plugins
+            go build -a -ldflags '-linkmode external -extldflags "-static"' -o workspace/plugins/artifactory ./cmd/vault-plugin-secrets-artifactory
+      - persist_to_workspace:
+          root: workspace
+          paths:
+            - plugins
       - run:
           name: Unit tests
           command: |
             go test -cover -coverprofile=coverage.out -v ./...
-            go tool cover -html=coverage.out -o /tmp/artifacts/coverage.html
+            go tool cover -html=coverage.out -o workspace/coverage/coverage.html
       - store_artifacts:
-          path: /tmp/artifacts
+          path: workspace
+
+  integration:
+    docker:
+      - image: vault:1.2.1
+        environment:
+          ARTIFACTORY_URL: http://localhost:8081/artifactory
+          VAULT_ADDR: http://127.0.0.1:8200
+          VAULT_TOKEN: root-token
+          VAULT_PLUGIN_DIR: workspace/plugins
+          VAULT_LOG_DIR: workspace/integration
+      - image: docker.bintray.io/jfrog/artifactory-oss:latest
+        environment:
+          ARTIFACTORY_MASTER_KEY: "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+    steps:
+      - checkout
+      - attach_workspace:
+          at: workspace
+      - run:
+          name: Install dependencies
+          command: |
+            apk add --update --no-cache bash curl
+      - run:
+          name: Integration tests
+          command: |
+            ./integration/test.sh
+      - store_artifacts:
+          path: workspace
+
+workflows:
+  version: 2
+  build-and-test:
+    jobs:
+      - build
+      - integration:
+          requires:
+            - build
