@@ -37,7 +37,7 @@ func (b *backend) secretAccessTokenRevoke(ctx context.Context, req *logical.Requ
 	tokenService.SetArtifactoryDetails(rtDetails)
 	err = tokenService.RevokeToken(&rtTokenService.RevokeTokenRequest{Token: accessToken})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to revoke token: %v\n", err)
+		return nil, fmt.Errorf("Failed to revoke token:\n%v\n", err)
 	}
 
 	return nil, nil
