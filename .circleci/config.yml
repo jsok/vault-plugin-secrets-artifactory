@@ -5,5 +5,18 @@ jobs:
       - image: circleci/golang:1.12
     steps:
       - checkout
-      - run: go test -v ./...
-      - run: go build -o bin/vault-plugin-secrets-artifactory .
+      - run:
+          name: Build
+          command: |
+            go build -o bin/vault-plugin-secrets-artifactory .
+      - run:
+          name: Create directory for artifacts
+          command: |
+            mkdir -p /tmp/artifacts
+      - run:
+          name: Unit tests
+          command: |
+            go test -cover -coverprofile=coverage.out -v ./...
+            go tool cover -html=coverage.out -o /tmp/artifacts/coverage.html
+      - store_artifacts:
+          path: /tmp/artifacts
