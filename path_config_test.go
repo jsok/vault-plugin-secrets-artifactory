@@ -83,7 +83,7 @@ func TestConfig_WriteIdempotent(t *testing.T) {
 	b, storage := newBackend(t)
 
 	data := map[string]interface{}{
-		"address": "https://example.com/artifactory",
+		"address": "https://example.com/artifactory/",
 		"api_key": "abc123",
 	}
 
