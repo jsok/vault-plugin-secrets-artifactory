@@ -7,7 +7,7 @@ It uses the [Artifactory REST API to dynamically issue Access Tokens](https://ww
 
 ## Work in Progress
 
-This plugin is still in development!
+This plugin is still in development! An initial release is being tracked under the [v0.1.0 - Initial release Milestone](https://github.com/jsok/vault-plugin-secrets-artifactory/milestone/1).
 
 ## Documentation
 
