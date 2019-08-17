@@ -6,13 +6,19 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
 	rtHttpClient "github.com/jfrog/jfrog-client-go/artifactory/httpclient"
 	"github.com/jfrog/jfrog-client-go/artifactory/services/utils"
 	clientutils "github.com/jfrog/jfrog-client-go/utils"
 	"github.com/jfrog/jfrog-client-go/utils/errorutils"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 )
+
+func init() {
+	log.SetLogger(log.NewLogger(log.WARN, os.Stderr))
+}
 
 type AccessTokenService struct {
 	client     *rtHttpClient.ArtifactoryHttpClient
@@ -66,9 +72,6 @@ func (s *AccessTokenService) CreateToken(req *CreateTokenRequest) (*CreateTokenR
 		return nil, err
 	}
 
-	httpClientDetails := rtDetails.CreateHttpClientDetails()
-	httpClientDetails.Headers["Content-Type"] = "application/x-www-form-urlencoded"
-
 	data := url.Values{}
 	if req.Username != "" {
 		data.Set("username", req.Username)
@@ -79,7 +82,8 @@ func (s *AccessTokenService) CreateToken(req *CreateTokenRequest) (*CreateTokenR
 	data.Set("expires_in", fmt.Sprintf("%v", req.ExpiresIn))
 	data.Set("refreshable", fmt.Sprintf("%v", req.Refreshable))
 
-	resp, body, err := s.client.SendPost(reqUrl, []byte(data.Encode()), &httpClientDetails)
+	httpClientDetails := rtDetails.CreateHttpClientDetails()
+	resp, body, err := s.client.SendPostForm(reqUrl, data, &httpClientDetails)
 	if err != nil {
 		return nil, err
 	}
@@ -106,14 +110,12 @@ func (s *AccessTokenService) RevokeToken(req *RevokeTokenRequest) error {
 		return err
 	}
 
-	httpClientDetails := rtDetails.CreateHttpClientDetails()
-	httpClientDetails.Headers["Content-Type"] = "application/x-www-form-urlencoded"
-
 	data := url.Values{}
 	data.Set("token", req.Token)
 	data.Set("token_id", req.TokenID)
 
-	resp, body, err := s.client.SendPost(reqUrl, []byte(data.Encode()), &httpClientDetails)
+	httpClientDetails := rtDetails.CreateHttpClientDetails()
+	resp, body, err := s.client.SendPostForm(reqUrl, data, &httpClientDetails)
 	if err != nil {
 		return err
 	}

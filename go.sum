@@ -95,6 +95,8 @@ github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99/go.mod h1:1lJo3i
 github.com/jfrog/gofrog v1.0.4/go.mod h1:4Caxvc8B2K1A798G1Ne+SsUICRPPre4GpgcFqj+EXJ8=
 github.com/jfrog/jfrog-client-go v0.3.3 h1:rh3pLmgbW4cnkVVksuknpK67KD7+HViLgFFA8iBmrlE=
 github.com/jfrog/jfrog-client-go v0.3.3/go.mod h1:z0TT7uU1IcpkiEgySOE7UD/0f/Vzg85wEOixa5IQTas=
+github.com/jfrog/jfrog-client-go v0.5.0 h1:VjFaZh5KxdMyZC1YlHsXUsFq8thWev8a1xUnjUfzC4Y=
+github.com/jfrog/jfrog-client-go v0.5.0/go.mod h1:z0TT7uU1IcpkiEgySOE7UD/0f/Vzg85wEOixa5IQTas=
 github.com/kevinburke/ssh_config v0.0.0-20180830205328-81db2a75821e/go.mod h1:CT57kijsi8u/K/BOFA39wgDQJ9CxiF4nAY/ojJ6r6mM=
 github.com/kisielk/errcheck v1.1.0/go.mod h1:EZBBE59ingxPouuu3KfxchcWSUPOHkagtvWXihfKN4Q=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
