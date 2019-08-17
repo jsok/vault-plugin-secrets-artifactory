@@ -8,6 +8,6 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/hashicorp/vault/sdk v0.1.13
 	github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6 // indirect
-	github.com/jfrog/jfrog-client-go v0.3.3
+	github.com/jfrog/jfrog-client-go v0.5.0
 	golang.org/x/arch v0.0.0-20190312162104-788fe5ffcd8c // indirect
 )

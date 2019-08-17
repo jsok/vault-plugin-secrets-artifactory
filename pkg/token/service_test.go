@@ -4,11 +4,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/jfrog/jfrog-client-go/artifactory/auth"
 	"github.com/jfrog/jfrog-client-go/artifactory/httpclient"
+	"github.com/jfrog/jfrog-client-go/utils/log"
 )
+
+func init() {
+	log.SetLogger(log.NewLogger(log.DEBUG, os.Stderr))
+}
 
 func TestCreateToken(t *testing.T) {
 	tests := []struct {
@@ -29,9 +35,6 @@ func TestCreateToken(t *testing.T) {
 				}
 				if r.URL.Path != "/"+tokenApiPath {
 					t.Fatalf("Expected request path to be %s, got %s\n", tokenApiPath, r.URL.Path)
-				}
-				if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
-					t.Fatalf("Unexpected content-type header: %s\n", r.Header.Get("Content-Type"))
 				}
 				if err := r.ParseForm(); err != nil {
 					t.Fatalf("Unable to parse form data from request: %v\n", err)
@@ -119,9 +122,6 @@ func TestRevokeToken(t *testing.T) {
 				}
 				if r.URL.Path != "/"+tokenRevokeApiPath {
 					t.Fatalf("Expected request path to be %s, got %s\n", tokenRevokeApiPath, r.URL.Path)
-				}
-				if r.Header.Get("Content-Type") != "application/x-www-form-urlencoded" {
-					t.Fatalf("Unexpected content-type header: %s\n", r.Header.Get("Content-Type"))
 				}
 				if err := r.ParseForm(); err != nil {
 					t.Fatalf("Unable to parse form data from request: %v\n", err)
