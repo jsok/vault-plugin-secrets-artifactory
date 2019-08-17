@@ -81,6 +81,7 @@ func (s *AccessTokenService) CreateToken(req *CreateTokenRequest) (*CreateTokenR
 	}
 	data.Set("expires_in", fmt.Sprintf("%v", req.ExpiresIn))
 	data.Set("refreshable", fmt.Sprintf("%v", req.Refreshable))
+	log.Debug("Sending HTTP POST Form data: ", data.Encode())
 
 	httpClientDetails := rtDetails.CreateHttpClientDetails()
 	resp, body, err := s.client.SendPostForm(reqUrl, data, &httpClientDetails)
@@ -113,6 +114,7 @@ func (s *AccessTokenService) RevokeToken(req *RevokeTokenRequest) error {
 	data := url.Values{}
 	data.Set("token", req.Token)
 	data.Set("token_id", req.TokenID)
+	log.Debug("Sending HTTP POST Form data: ", data.Encode())
 
 	httpClientDetails := rtDetails.CreateHttpClientDetails()
 	resp, body, err := s.client.SendPostForm(reqUrl, data, &httpClientDetails)
@@ -122,6 +124,7 @@ func (s *AccessTokenService) RevokeToken(req *RevokeTokenRequest) error {
 
 	// This usually means that the token is not revocable
 	if resp.StatusCode == http.StatusInternalServerError {
+		log.Info("Revoke Token failed, token may not be recovable")
 		return nil
 	}
 	if resp.StatusCode != http.StatusOK {
