@@ -175,3 +175,168 @@ func TestRevokeToken(t *testing.T) {
 		}
 	}
 }
+
+func TestGetTokens(t *testing.T) {
+	tests := []struct {
+		shouldSucceed bool
+		handler       http.HandlerFunc
+	}{
+		{
+			true,
+			func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodGet {
+					t.Fatalf("Expected GET but got request with method: %s\n", r.Method)
+				}
+				if r.URL.Path != "/"+tokenApiPath {
+					t.Fatalf("Expected request path to be %s, got %s\n", tokenApiPath, r.URL.Path)
+				}
+
+				body, err := json.Marshal(&GetTokensResponse{
+					Tokens: nil,
+				})
+				if err != nil {
+					t.Fatal("Encoding mock HTTP response failed!")
+				}
+				w.Write(body)
+			},
+		},
+		{
+			false,
+			func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(400) },
+		},
+	}
+
+	for _, test := range tests {
+		ts := httptest.NewTLSServer(test.handler)
+		defer ts.Close()
+
+		rtDetails := auth.NewArtifactoryDetails()
+		rtDetails.SetUrl(ts.URL + "/")
+		rtDetails.SetApiKey("fake-api-key")
+
+		client, err := httpclient.ArtifactoryClientBuilder().
+			SetInsecureTls(true).
+			SetArtDetails(&rtDetails).
+			Build()
+		if err != nil {
+			t.Fatalf("Failed to create Artifactory client: %v\n", err)
+		}
+
+		tokenService := NewAccessTokenService(client)
+		tokenService.SetArtifactoryDetails(rtDetails)
+		_, err = tokenService.GetTokens()
+		if test.shouldSucceed && err != nil {
+			t.Fatalf("Expected test to succeed but got error: %v\n", err)
+		}
+		if !test.shouldSucceed && err == nil {
+			t.Fatal("Expected test to fail but succeeded!")
+		}
+	}
+}
+
+func TestLookupTokenID(t *testing.T) {
+	testId := "test-id"
+
+	tests := []struct {
+		match   *string
+		handler http.HandlerFunc
+	}{
+		{
+			nil,
+			func(w http.ResponseWriter, r *http.Request) {
+				body, err := json.Marshal(&GetTokensResponse{
+					Tokens: nil,
+				})
+				if err != nil {
+					t.Fatal("Encoding mock HTTP response failed!")
+				}
+				w.Write(body)
+			},
+		},
+		{
+			nil,
+			func(w http.ResponseWriter, r *http.Request) {
+				body, err := json.Marshal(&GetTokensResponse{
+					Tokens: []ArtifactoryToken{
+						ArtifactoryToken{
+							TokenID:     "id1",
+							Issuer:      "blank",
+							Subject:     "artifactory/user/user1",
+							Expiry:      0,
+							Refreshable: false,
+							IssuedAt:    0,
+						},
+					},
+				})
+				if err != nil {
+					t.Fatal("Encoding mock HTTP response failed!")
+				}
+				w.Write(body)
+			},
+		},
+		{
+			&testId,
+			func(w http.ResponseWriter, r *http.Request) {
+				body, err := json.Marshal(&GetTokensResponse{
+					Tokens: []ArtifactoryToken{
+						ArtifactoryToken{
+							TokenID:     "id1",
+							Issuer:      "blank",
+							Subject:     "artifactory/user/user1",
+							Expiry:      0,
+							Refreshable: false,
+							IssuedAt:    0,
+						},
+						ArtifactoryToken{
+							TokenID:     testId,
+							Issuer:      "blank",
+							Subject:     "artifactory/user/test",
+							Expiry:      0,
+							Refreshable: false,
+							IssuedAt:    0,
+						},
+						ArtifactoryToken{
+							TokenID:     "id2",
+							Issuer:      "blank",
+							Subject:     "artifactory/user/user2",
+							Expiry:      0,
+							Refreshable: false,
+							IssuedAt:    0,
+						},
+					},
+				})
+				if err != nil {
+					t.Fatal("Encoding mock HTTP response failed!")
+				}
+				w.Write(body)
+			},
+		},
+	}
+
+	for _, test := range tests {
+		ts := httptest.NewTLSServer(test.handler)
+		defer ts.Close()
+
+		rtDetails := auth.NewArtifactoryDetails()
+		rtDetails.SetUrl(ts.URL + "/")
+		rtDetails.SetApiKey("fake-api-key")
+
+		client, err := httpclient.ArtifactoryClientBuilder().
+			SetInsecureTls(true).
+			SetArtDetails(&rtDetails).
+			Build()
+		if err != nil {
+			t.Fatalf("Failed to create Artifactory client: %v\n", err)
+		}
+
+		tokenService := NewAccessTokenService(client)
+		tokenService.SetArtifactoryDetails(rtDetails)
+		id, err := tokenService.LookupTokenID("test")
+		if err != nil {
+			t.Fatalf("Expected test to succeed but got error: %v\n", err)
+		}
+		if !(id == nil && test.match == nil) && (*id != *test.match) {
+			t.Fatalf("Expected token id to be %s but got %s.", *test.match, *id)
+		}
+	}
+}
