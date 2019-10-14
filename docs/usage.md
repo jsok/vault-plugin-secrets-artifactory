@@ -1,85 +1,18 @@
 ---
-layout: docs
+layout: "docs"
 ---
 
 {::options toc_levels="2" /}
+# Artifactory Database Secrets Engine
 
-# Artifactory Secrets Engine
+Artifactory is one of the supported plugins for the database secrets engine. This
+plugin generates database credentials dynamically based on configured roles for
+Artifactory.
 
-The Artifactory secrets engine dynamically generates access tokens base on the
-user and/or the groups configured in roles.
-This allows short lived access tokens to be created and avoids the need to
-distribute credentials or API keys to applications and CI/CD systems.
+See the [database secrets engine][database-docs] docs for
+more information about setting up the database secrets engine.
 
-* Table of Contents
-{:toc}
-
-## Setup
-
-Most secrets engines must be configured in advance before they can perform
-their functions. These steps are usually completed by an operator or
-configuration management tool.
-
- 1. Install the plugin in the [`plugin_directory`](https://www.vaultproject.io/docs/configuration/index.html#plugin_directory):
-
-    ```
-    vault write sys/plugins/catalog/artifactory \
-        sha_256="$(shasum -a 256 /path/to/plugin-directory/vault-plugin-secrets-artifactory | cut -d' ' -f1)" \
-        command="vault-plugin-secrets-artifactory"
-    ```
-
- 1. Enable the Artifactory secrets engine:
-
-    ```
-    $ vault secrets enable --plugin-name=artifactory -path=artifactory plugin
-    Success! Enabled the artifactory secrets engine at: artifactory/
-    ```
-
- 1. Configure the engine with either user/password or API key credentials:
-
-    ```
-    $ vault write artifactory/config \
-        address=https://example.com/artifactory/ \
-        api_key=<API KEY>
-    ```
-
-    or:
-
-    ```
-    $ vault write artifactory/config \
-        address=https://example.com/artifactory/ \
-        username=<USERNAME> \
-        password=<PASSWORD>
-    ```
-
- 1. Configure a role:
-
-    ```
-    $ vault write artifactory/roles/reader \
-        member_of_groups=readers
-    ```
-
- 1. Issue an access token:
-
-    ```
-    $ vault read --format=json artifactory/token/privileged
-    {
-        "data": {
-            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            "scope": "api:* member-of-groups:readers",
-            "token_type": "Bearer"
-        }
-    }
-    ```
-
- 1. Use the access token to interact with artifactory:
-
-    ```
-    curl -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' \
-         https://example.com/artifactory/api/system/ping
-    ```
-
-## Considerations
+## Getting Started
 
 ### Token Scope, Expiry and Revocation
 
@@ -111,11 +44,81 @@ the token is irrevocable and will not retry*.
 
 See [Generating Expirable Tokens][generating-expirable-tokens] in the Artifactory documentation for more details.
 
+## Setup
+
+1. Enable the database secrets engine if it is not already enabled:
+
+    ```text
+    $ vault secrets enable database
+    Success! Enabled the database secrets engine at: database/
+    ```
+
+    By default, the secrets engine will enable at the name of the engine. To
+    enable the secrets engine at a different path, use the `-path` argument.
+
+1. Configure Vault with the proper plugin and connection information:
+
+    ```text
+    $ vault write database/config/my-artifactory-database \
+        plugin_name="artifactory-database-plugin" \
+        allowed_roles="internally-defined-role,externally-defined-role" \
+        username=vault \
+        password=myPa55word \
+        address=http://localhost:8081/artifactory
+    ```
+
+    Or using an API key
+
+    ```text
+    $ vault write database/config/my-artifactory-database \
+        plugin_name="artifactory-database-plugin" \
+        allowed_roles="art-reader" \
+        api_key=api-key \
+        address=http://localhost:8081/artifactory
+    ```
+
+1. Configure a role that maps a name in Vault to a role definition in Artifactory.
+
+    ```text
+    $ vault write database/roles/my-role \
+        db_name="my-artifactory-database" \
+        creation_statements='{"artifactory_groups": ["art-reader"] \
+        default_ttl="1h" \
+        max_ttl="24h"
+     ```
+
+## Usage
+
+After the secrets engine is configured and a user/machine has a Vault token with
+the proper permission, it can generate credentials.
+
+1. Generate a new credential by reading from the `/creds` endpoint with the name
+of the role:
+
+    ```text
+    $ vault read database/creds/art-reader
+    Key                Value
+    ---                -----
+    lease_id           database/creds/art-reader/2f6a614c-4aa2-7b19-24b9-ad944a8d4de6
+    lease_duration     1h
+    lease_renewable    true
+    password           8cab931c-d62e-a73d-60d3-5ee85139cd66
+    username           v-root-e2978cd0-
+    ```
+
+The returned token can be used with the username for basic auth or by itself for token authentication.
+
 ## API
 
-The Artifactory secrets engine has a full HTTP API.
-Please see the [Artifactory secrets engine API]({{ site.baseurl }}/api) for more details.
+The full list of configurable options can be seen in the [Artifactory database
+plugin API]({{ site.baseurl }}/api) page.
 
+For more information on the database secrets engine's HTTP API please see the
+[Database secrets engine API][database-api] page.
+
+
+[database-docs]: https://www.vaultproject.io/docs/secrets/databases/index.html
+[database-api]: https://www.vaultproject.io/api/secret/databases/index.html
 [generating-expirable-tokens]: https://www.jfrog.com/confluence/display/ACC/Access+Tokens#AccessTokens-GeneratingExpirableTokens
 [generating-admin-tokens]: https://www.jfrog.com/confluence/display/ACC/Access+Tokens#AccessTokens-GeneratingAdminTokens
 [non-existing-users]: https://www.jfrog.com/confluence/display/ACC/Access+Tokens#AccessTokens-SupportAuthenticationforNon-ExistingUsers

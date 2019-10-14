@@ -4,123 +4,71 @@ layout: docs
 
 {::options toc_levels="2" /}
 
-# Artifactory Secrets Engine (API)
+# Artifactory Database Plugin HTTP API
 
-This is the API documentation for the Vault Artifactory secrets engine.
+The Artifactory database plugin is one of the supported plugins for the database
+secrets engine. This plugin generates credentials dynamically based on
+configured roles for Artifactory.
 
-This documentation assumes the Artifactory secrets engine is enabled at the `/artifactory` path in Vault. Since it is possible to enable secrets engines at any location, please update your API calls accordingly.
+## Configure Connection
 
-* Table of Contents
-{:toc}
+In addition to the parameters defined by the [Database
+Backend](/api/secret/databases/index.html#configure-connection), this plugin
+has a number of parameters to further configure a connection.
 
-## Configure Access
+| Method   | Path                         |
+| :--------------------------- | :--------------------- |
+| `POST`   | `/database/config/:name`     |
 
-This endpoint configures the access information for Artifactory. This access information is used so that Vault can communicate with Artifactory and generate Artifactory access tokens.
+### Parameters
 
-| Method | Path |
-|:-------|:-----|
-|`POST`  | `/artifactory/config` |
-
-### Paramaters
-
- * `address` `(string: required)` - Specifies the Artifactory URL, e.g. `https://artifactory.example.com/artifactory`
- * `api_key` `(string: required)` - The API key associated with the user which will be used to generate access tokens. Mutually exclusive with `username` and `password`.
- * `username` `(string: required)` - The user which will be used to generate access token. Mutually exclusive with `api_key` and must also supply `password`.
- * `password` `(string: required)` - The password of the user which will be used to generate access token.
- * `tls_verify` `(boolean: optional)` - Disable TLS verification. Defaults to `true`.
-
+- `addres` `(string: <required>)` - The URL for Artifactory's API ("http://localhost:8081/artifactory").
+- `username` `(string: "")` - The username to be used for Artifactory ("vault"). Required if using basic auth.
+- `password` `(string: "")` - The password to be used for Artifactory ("pa55w0rd"). Required if using basic auth.
+- `api_key` `(string: "")` - The access token to be used for Artifactory. Either username and password or the api key are required to authenticate to Artifactory.
+- `insecure` `(bool: false)` - Not recommended. Default to false. Can be set to true to disable SSL verification.
 
 ### Sample Payload
 
 ```json
 {
-    "address": "https://artifactory.example.com/artifactory",
-    "api_key": "AKCp5ZkK11XnHiqJ1mFgivc1NePCXXE2Ujk9jGHhPp4K4XqMp25bpoSFeFwn6ExSBXy7n7uw9"
+  "plugin_name": "artifactory-database-plugin",
+  "allowed_roles": "internally-defined-role,externally-defined-role",
+  "url": "http://localhost:9200",
+  "username": "vault",
+  "password": "myPa55word",
 }
 ```
 
-## Create/Update Role
+### Sample Request
 
-This endpoint creates/updates an Artifactory role definition.  If the role does not exist, it will be created. If the role already exists, it will receive updated attributes.
-
-| Method | Path |
-|:-------|:-----|
-|`POST`  | `/artifactory/roles/:name` |
-
-### Paramaters
-
- * `name` `(string: required)` - Specifies the name of an existing role against which to create this Artifactory access token. This is part of the request URL.
- * `username` `(string: optional)` - The user name for which this token is created. If the user does not exist, a transient user is created. Non-admin users can only create tokens for themselves so they must specify their own username. If the user does not exist, the `member_of_groups` must be provided.
- * `member_of_groups` `(list: <group name>)` - The list of groups that the token is associated with. Translates to `scope=member-of-groups:...`.
- * `ttl` `(duration="")` - Specifies the TTL for this role. This is provided as a string duration with a time suffix like "30s" or "1h" or as seconds. If not provided, the default Vault TTL is used.
-
-
-### Sample Payload
-
-```json
-{
-    "username": "rt-user",
-    "member_of_groups": [
-        "Readers",
-        "Group with spaces"
-    ],
-    "ttl": "1h"
-}
+```
+$ curl \
+    --header "X-Vault-Token: ..." \
+    --request POST \
+    --data @payload.json \
+    http://127.0.0.1:8200/v1/database/config/my-artifactory-database
 ```
 
-## Read Role
+## Statements
 
-This endpoint queries for information about a Artifactory role with the given name. If no role exists with that name, a 404 is returned.
+Statements are configured during role creation and are used by the plugin to
+determine what is sent to the database on user creation, renewing, and
+revocation. For more information on configuring roles see the [Role
+API](/api/secret/databases/index.html#create-role) in the database secrets engine docs.
 
-| Method | Path |
-|:-------|:-----|
-|`GET`  | `/artifactory/roles/:name` |
+### Parameters
 
-### Paramaters
+The following are the statements used by this plugin. If not mentioned in this
+list the plugin does not support that statement type.
 
- * `name` `(string: required)` - Specifies the name of the role to query. This is part of the request URL.
+- `creation_statements` `(string: <required>)` – Using JSON, list
+  `artifactory_groups` whose Artifactory permissions the role should adopt.
+  They must pre-exist in Artifactory.
 
-## List Roles
-
-This endpoint lists all existing roles in the secrets engine.
-
-| Method | Path |
-|:-------|:-----|
-|`LIST`  | `/artifactory/roles` |
-
-## Delete Role
-
-This endpoint lists all existing roles in the secrets engine.
-
-| Method | Path |
-|:-------|:-----|
-|`DELETE`  | `/artifactory/roles/:name` |
-
-### Paramaters
-
- * `name` `(string: required)` - Specifies the name of the role to delete. This is part of the request URL. 
-
-## Create Access Token
-
-This endpoint creates an Artifactory access token based on the given role definition.
-
-
-| Method | Path |
-|:-------|:-----|
-|`GET`   | `/artifactory/token/:name` |
-
-### Paramaters
-
- * `name` `(string: required)` - Specifies the name of an existing role against which to create this Artifactory access token. This is part of the request URL. 
-
-### Sample Response
-
+### Sample Creation Statements
 ```json
 {
-    "data": {
-        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-        "scope": "api:* member-of-groups:readers",
-        "token_type": "Bearer"
-    }
+  "artifactory_groups": ["pre-existing-group-in-artifactory"]
 }
 ```
