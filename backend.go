@@ -3,6 +3,7 @@ package artifactory
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/vault/sdk/framework"
 	"github.com/hashicorp/vault/sdk/logical"
@@ -55,7 +56,8 @@ func (b *backend) rtClient(ctx context.Context, s logical.Storage) (*rtHttpClien
 	}
 
 	rtDetails := rtAuth.NewArtifactoryDetails()
-	rtDetails.SetUrl(config.Address)
+	// Ensure trailing slash, rtClient assumes this when building URLs
+	rtDetails.SetUrl(strings.TrimSuffix(config.Address, "/") + "/")
 	rtDetails.SetApiKey(config.ApiKey)
 	rtDetails.SetUser(config.Username)
 	rtDetails.SetPassword(config.Password)
