@@ -8,7 +8,7 @@ jobs:
       - run:
           name: Build
           command: |
-            go build -o bin/vault-plugin-secrets-artifactory .
+            go build -o bin/vault-plugin-database-artifactory .
       - run:
           name: Create directory for artifacts
           command: |
